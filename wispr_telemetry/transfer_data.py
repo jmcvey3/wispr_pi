@@ -56,12 +56,11 @@ def get_rpi_serial():
     return cpuserial
 
 
-def publish_data(schema, ext):
-    data_dir = os.path.join('/dev','sda','wispr_data',schema,'') # !!!
+def publish_data(data_dir, schema, ext):
     data_cache_dir = os.path.join('/dev','sda','wispr_data',schema+'.backup','')
 
-    #if not os.path.exists(data_cache_dir):
-    #    os.makedirs(data_cache_dir)
+    if not os.path.exists(data_cache_dir):
+       os.makedirs(data_cache_dir)
 
     # copy the files to S3, move them to the backup location
     filepaths = glob(os.path.join(data_dir,'*'+ext))
@@ -91,12 +90,14 @@ if __name__ == "__main__":
     # ext = '.wav'
     # publish_data(schema, ext)
 
-    # #### GPS ####
-    # schema = os.path.join('spar_drifter', 'gps')
-    # ext = '.txt'
-    # publish_data(schema, ext)
+    #### GPS ####
+    # TODO Convert NMEA strings to csv
+    schema = os.path.join('spar_drifter', 'gps')
+    ext = '.txt'
+    publish_data(schema, ext)
 
     #### Pressure ####
+    data_dir = os.path.join('home','pi','wispr_pi','PressureSensor','')
     schema = os.path.join('spar_drifter', 'pressure')
     ext = '.csv'
     publish_data(schema, ext)
