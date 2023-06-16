@@ -1,3 +1,7 @@
 [submodule "blue_robotics_ms5837"]
 	path = blue_robotics_ms5837
 	url = https://github.com/bluerobotics/ms5837-python.git
+[submodule "wispr2_sw"]
+	path = wispr2_sw
+	url = https://github.com/embeddedocean/wispr2_sw.git
+	branch = OSU
