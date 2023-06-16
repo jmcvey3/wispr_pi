@@ -1,6 +1,7 @@
 import os
 import subprocess
 from glob import glob
+import logging
 
 
 # Set to True to use AWS bucket
@@ -57,7 +58,9 @@ def get_rpi_serial():
 
 
 def publish_data(data_dir, schema, ext):
-    data_cache_dir = os.path.join('/dev','sda','wispr_data',schema+'.backup','')
+    logging.info(f"Transfering {schema}...")
+
+    data_cache_dir = os.path.join('','media','wispr_sd',schema+'.backup','')
 
     if not os.path.exists(data_cache_dir):
        os.makedirs(data_cache_dir)
@@ -82,22 +85,41 @@ def publish_data(data_dir, schema, ext):
             os.rename(fpath, os.path.join(data_cache_dir,filename))
         except:
             pass
+    
+    logging.info("Completed transfer")
 
 
 if __name__ == "__main__":
-    # #### Hydrophone ####
-    # schema = os.path.join('spar_drifter', 'hydrophone')
-    # ext = '.wav'
-    # publish_data(schema, ext)
+    ## Assert connection to /media/wispr_sd and log
+    logger = logging.getLogger(__name__)
+    logfile = os.path.join('','home','pi','wispr_pi','wispr_telemetry','logs','telemetry.log')
+    logging.basicConfig(filename=logfile,
+                        filemode='w',
+                        level=logging.NOTSET,
+                        format='%(name)s - %(levelname)s - %(message)s')
+    
+    logging.info('-------------------transfer_data.py-----------------')
+
+    if os.path.exists('/media/wispr_sd'):
+        logging.debug('SD card accessible')
+    else:
+        logging.error('SD card not found')
+
+    #### Hydrophone ####
+    data_dir = os.path.join('','media','wispr_sd','hydrophone')
+    schema = 'hydrophone'
+    ext = '.wav'
+    publish_data(schema, ext)
 
     #### GPS ####
     # TODO Convert NMEA strings to csv
-    schema = os.path.join('spar_drifter', 'gps')
+    data_dir = os.path.join('','media','wispr_sd','gps')
+    schema = 'gps'
     ext = '.txt'
     publish_data(schema, ext)
 
     #### Pressure ####
-    data_dir = os.path.join('home','pi','wispr_pi','PressureSensor','')
-    schema = os.path.join('spar_drifter', 'pressure')
+    data_dir = os.path.join('','home','pi','wispr_pi','PressureSensor')
+    schema = 'pressure'
     ext = '.csv'
     publish_data(schema, ext)

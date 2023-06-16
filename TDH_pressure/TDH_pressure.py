@@ -1,7 +1,10 @@
-import ms5837
+import os
 import time
 import logging
 from datetime import datetime
+
+import ms5837
+
 
 # Define loop constants
 burst_time = 0
@@ -10,10 +13,14 @@ burst_interval = 1
 pressureFreq = 4
 pressure_samples = pressureFreq * burst_seconds
 
+base_path = os.path.join('','home','pi','wispr_pi','PressureSensor')
+
 # Set up logging file
 logger = logging.getLogger('system_logger')
-LOG_FILE = ('/home/pi/PressureSensor/logs/' + '/' + 'pressureSensorLog_' + datetime.strftime(datetime.now(), '%d%b%Y') + '.log')
-logging.basicConfig(filename = LOG_FILE, format = '%(asctime)s, %(filename)s - [%(levelname)s] - %(message)s', level = logging.DEBUG)
+LOG_FILE = os.path.join(base_path,'logs','pressureSensorLog_' + datetime.strftime(datetime.now(), '%d%b%Y') + '.log')
+logging.basicConfig(filename=LOG_FILE, 
+                    format='%(asctime)s, %(filename)s - [%(levelname)s] - %(message)s', 
+                    level=logging.DEBUG)
 
 #initialize pressure sensor
 sensor = ms5837.MS5837_30BA() # Default I2C bus is 1 (Raspberry Pi 3)
@@ -40,7 +47,7 @@ while True:
             
             logging.info('starting burst')
             # new file TODO: Update with SD card?
-            fname = '/home/pi/PressureSensor/' + '/' + 'pressureSensorData_' + datetime.strftime(datetime.now(), '%d%b%Y', '.csv')
+            fname = os.path.join(base_path, 'pressureSensorData_' + datetime.strftime(datetime.now(), '%d%b%Y') + '.csv')
             logging.info('file name: %s' %fname)
 
             with open(fname, 'w',newline = '\n') as pressure_out:
