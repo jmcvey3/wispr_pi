@@ -11,7 +11,7 @@
 #
 # By default this script does nothing.
 
-sudo mkdir /media/wispr_sd
+mkdir /media/wispr_sd
 sudo mount -t exfat /dev/mmcblk1p1 /media/wispr_sd
 
 exit 0

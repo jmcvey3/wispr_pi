@@ -21,4 +21,4 @@
 # For more information see the manual pages of crontab(5) and cron(8)
 # 
 # m h  dom mon dow   command
-@reboot sh /home/pi/wispr_pi/pressure_sensor/TDH_pressure/pressurelauncher.sh >/home/pi/logs/cronlog 2>&1
+@reboot bash /home/pi/wispr_pi/pressure_sensor/TDH_pressure/pressurelauncher.sh

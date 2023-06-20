@@ -16,7 +16,7 @@ git submodule update --init --remote
 
 3. Use the backup crontab ('crontab.bak') and restore the root crontab 
 ```bash
-    sudo crontab /home/pi/wispr_pr/crontab.bak
+    sudo crontab /home/pi/wispr_pr/config_files/crontab.bak
 ```
 
 4. Set up the additional rPi settings as specified in wispr_pi.docx - files are backed up in ./config_files

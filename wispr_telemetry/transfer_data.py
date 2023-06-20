@@ -57,10 +57,29 @@ def get_rpi_serial():
     return cpuserial
 
 
+def init_logger():
+    ## Assert connection to /media/wispr_sd and log
+    logger = logging.getLogger(__name__)
+    log_path = os.path.join('/','home','pi','wispr_pi','wispr_telemetry','logs')
+    if not os.path.exists(log_path):
+        os.makedirs(log_path)
+    logging.basicConfig(filename=log_path+'/telemetry.log',
+                        filemode='w',
+                        level=logging.NOTSET,
+                        format='%(asctime)s, %(name)s - %(levelname)s - %(message)s')
+    
+    logging.info('-------------------transfer_data.py-----------------')
+
+    if os.path.exists('/media/wispr_sd'):
+        logging.debug('SD card directory accessible')
+    else:
+        logging.error('SD card directory not found')
+        
+
 def publish_data(data_dir, schema, ext):
     logging.info(f"Transfering {schema}...")
 
-    data_cache_dir = os.path.join('','media','wispr_sd',schema+'.backup','')
+    data_cache_dir = os.path.join('/','media','wispr_sd',schema+'.backup','')
 
     if not os.path.exists(data_cache_dir):
        os.makedirs(data_cache_dir)
@@ -90,36 +109,24 @@ def publish_data(data_dir, schema, ext):
 
 
 if __name__ == "__main__":
-    ## Assert connection to /media/wispr_sd and log
-    logger = logging.getLogger(__name__)
-    logfile = os.path.join('','home','pi','wispr_pi','wispr_telemetry','logs','telemetry.log')
-    logging.basicConfig(filename=logfile,
-                        filemode='w',
-                        level=logging.NOTSET,
-                        format='%(name)s - %(levelname)s - %(message)s')
-    
-    logging.info('-------------------transfer_data.py-----------------')
-
-    if os.path.exists('/media/wispr_sd'):
-        logging.debug('SD card accessible')
-    else:
-        logging.error('SD card not found')
+    init_logger()
 
     #### Hydrophone ####
-    data_dir = os.path.join('','media','wispr_sd','hydrophone')
+    # TODO Create data product to send to server
+    data_dir = os.path.join('/','media','wispr_sd','hydrophone')
     schema = 'hydrophone'
     ext = '.wav'
-    publish_data(schema, ext)
+    publish_data(data_dir, schema, ext)
 
     #### GPS ####
     # TODO Convert NMEA strings to csv
-    data_dir = os.path.join('','media','wispr_sd','gps')
+    data_dir = os.path.join('/','media','wispr_sd','gps')
     schema = 'gps'
     ext = '.txt'
-    publish_data(schema, ext)
+    publish_data(data_dir, schema, ext)
 
     #### Pressure ####
-    data_dir = os.path.join('','home','pi','wispr_pi','PressureSensor')
+    data_dir = os.path.join('/','home','pi','wispr_pi','pressure_sensor','data')
     schema = 'pressure'
     ext = '.csv'
-    publish_data(schema, ext)
+    publish_data(data_dir, schema, ext)
