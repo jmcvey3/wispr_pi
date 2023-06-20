@@ -19,6 +19,6 @@ git submodule update --init --remote
     sudo crontab /home/pi/wispr_pr/crontab.bak
 ```
 
-4. Set up the additional rPi settings as specified in wispr_pi.docx
+4. Set up the additional rPi settings as specified in wispr_pi.docx - files are backed up in ./config_files
 
 5. Reboot and ensure a pressure sensor log is recorded in /home/pi/wispr_pi/PressureSensor/logs
