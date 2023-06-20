@@ -18,4 +18,7 @@ git submodule update --init --remote
 ```bash
     sudo crontab /home/pi/wispr_pr/crontab.bak
 ```
-4. Reboot and ensure a pressure sensor log is recorded in /home/pi/wispr_pi/PressureSensor/logs
+
+4. Set up the additional rPi settings as specified in wispr_pi.docx
+
+5. Reboot and ensure a pressure sensor log is recorded in /home/pi/wispr_pi/PressureSensor/logs

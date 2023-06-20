@@ -13,7 +13,7 @@ burst_interval = 1
 pressureFreq = 4
 pressure_samples = pressureFreq * burst_seconds
 
-base_path = os.path.join('','home','pi','wispr_pi','PressureSensor')
+base_path = os.path.join('','home','pi','wispr_pi','pressure_sensor')
 
 # Set up logging file
 logger = logging.getLogger('system_logger')
@@ -46,8 +46,7 @@ while True:
       if now.minute == burst_time or now.minute % burst_interval == 0 and now.second == 0:
             
             logging.info('starting burst')
-            # new file TODO: Update with SD card?
-            fname = os.path.join(base_path, 'pressureSensorData_' + datetime.strftime(datetime.now(), '%d%b%Y') + '.csv')
+            fname = os.path.join(base_path, 'data', 'pressureSensorData_' + datetime.strftime(datetime.now(), '%d%b%Y') + '.csv')
             logging.info('file name: %s' %fname)
 
             with open(fname, 'w',newline = '\n') as pressure_out:
