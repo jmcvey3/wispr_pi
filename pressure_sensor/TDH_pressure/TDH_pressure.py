@@ -13,11 +13,17 @@ burst_interval = 1
 pressureFreq = 4
 pressure_samples = pressureFreq * burst_seconds
 
-base_path = os.path.join('','home','pi','wispr_pi','pressure_sensor')
+log_path = os.path.join('/','home','pi','wispr_pi','pressure_sensor','logs')
+data_path = os.path.join('/','home','pi','wispr_pi','pressure_sensor','data')
+
+if not os.path.exists(log_path):
+      os.makedirs(log_path)
+if not os.path.exists(data_path):
+      os.makedirs(data_path)
 
 # Set up logging file
 logger = logging.getLogger('system_logger')
-LOG_FILE = os.path.join(base_path,'logs','pressureSensorLog_' + datetime.strftime(datetime.now(), '%d%b%Y') + '.log')
+LOG_FILE = os.path.join(log_path,'pressureSensorLog_' + datetime.strftime(datetime.now(), '%d%b%Y') + '.log')
 logging.basicConfig(filename=LOG_FILE, 
                     format='%(asctime)s, %(filename)s - [%(levelname)s] - %(message)s', 
                     level=logging.DEBUG)
@@ -46,7 +52,7 @@ while True:
       if now.minute == burst_time or now.minute % burst_interval == 0 and now.second == 0:
             
             logging.info('starting burst')
-            fname = os.path.join(base_path, 'data', 'pressureSensorData_' + datetime.strftime(datetime.now(), '%d%b%Y') + '.csv')
+            fname = os.path.join(data_path, 'pressureSensorData_' + datetime.strftime(datetime.now(), '%d%b%Y') + '.csv')
             logging.info('file name: %s' %fname)
 
             with open(fname, 'w',newline = '\n') as pressure_out:

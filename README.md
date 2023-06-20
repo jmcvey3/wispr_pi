@@ -10,7 +10,7 @@ git submodule update --init --remote
 ```
 2. Navigate to 'blue_robotics_ms5837' (pressure sensor) and install:
 ```bash
-    cd /home/pi/wispr_pi/blue_robotics_mw5837
+    cd /home/pi/wispr_pi/pressure_sensor/blue_robotics_mw5837
     sudo pip install -e .
 ```
 
