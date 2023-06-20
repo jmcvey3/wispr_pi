@@ -21,4 +21,6 @@
 # For more information see the manual pages of crontab(5) and cron(8)
 # 
 # m h  dom mon dow   command
+
 @reboot bash /home/pi/wispr_pi/pressure_sensor/TDH_pressure/pressurelauncher.sh
+*/5 * * * * sudo /usr/bin/python3 /home/pi/wispr_pi/wispr_telemetry/transfer_data.py "Backup and send SD card data"

@@ -4,10 +4,23 @@ from glob import glob
 import logging
 
 
-# Set to True to use AWS bucket
+""" 
+This file is set up to transfer data from the WISPR's SD card over the cloud to 
+a server. Transferred data is moved to a ".backup" folder after it is sent.
+
+Hydrophone and GPS data is being recorded by the wispr and saved on the SD card.
+Pressure sensor data, collected by the Raspberry Pi, is recorded on the Pi's 
+storage drive and is transferred to the wispr's SD card via this script.
+
+Two functions are provided to transfer data over AWS or an ssh connection.
+For the former, AWS S3 bucket keys should be set on the rPi. For the latter, a 
+VPN connection needs to be set up on the rPi.
+"""
+
+# Set to True to use AWS bucket, otherwise defaults to using ssh over VPN
 AWS = False
 
-# For VPN connection
+# For ssh'ing over a VPN connection
 USER = 'OSU'
 SERVER = '192.168.0.2'
 
@@ -39,7 +52,7 @@ def secure_copy(filepath, filename, schema):
     try:
         subprocess.run(["scp", filepath, f"{USER}@{SERVER}:{scp_path}"])
     except:
-        raise Exception("Could not make server connection")
+        logging.error(f"Could not make server connection: {USER}@{SERVER}:{scp_path}")
 
 
 def get_rpi_serial():
@@ -64,7 +77,6 @@ def init_logger():
     if not os.path.exists(log_path):
         os.makedirs(log_path)
     logging.basicConfig(filename=log_path+'/telemetry.log',
-                        filemode='w',
                         level=logging.NOTSET,
                         format='%(asctime)s, %(name)s - %(levelname)s - %(message)s')
     
@@ -77,7 +89,7 @@ def init_logger():
         
 
 def publish_data(data_dir, schema, ext):
-    logging.info(f"Transfering {schema}...")
+    logging.info(f"Transferring {schema}...")
 
     data_cache_dir = os.path.join('/','media','wispr_sd',schema+'.backup','')
 

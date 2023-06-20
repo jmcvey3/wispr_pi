@@ -16,9 +16,13 @@ git submodule update --init --remote
 
 3. Use the backup crontab ('crontab.bak') and restore the root crontab 
 ```bash
-    sudo crontab /home/pi/wispr_pr/config_files/crontab.bak
+    sudo crontab /home/pi/wispr_pi/config_files/crontab.bak
 ```
+   The crontab is set to start recording pressure sensor data on boot, as well as to send data to backup
+   every 5 minutes.
+ 
+4. If using AWS S3 to store data in the cloud, please `pip install boto3` and follow the instructions in "How to Install AWS-CLI on rPi.pdf" to set up S3 access keys.
 
-4. Set up the additional rPi settings as specified in wispr_pi.docx - files are backed up in ./config_files
+5. Set up the additional rPi settings as specified in wispr_pi.docx - files are backed up in ./config_files
 
-5. Reboot and ensure a pressure sensor log is recorded in /home/pi/wispr_pi/PressureSensor/logs
+6. Reboot and ensure a pressure sensor log is recorded in /home/pi/wispr_pi/PressureSensor/logs
