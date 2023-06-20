@@ -1,8 +1,8 @@
 import os
 import subprocess
-from glob import glob
 import logging
-
+from glob import glob
+from datetime import datetime
 
 """ 
 This file is set up to transfer data from the WISPR's SD card over the cloud to 
@@ -73,10 +73,10 @@ def get_rpi_serial():
 def init_logger():
     ## Assert connection to /media/wispr_sd and log
     logger = logging.getLogger(__name__)
-    log_path = os.path.join('/','home','pi','wispr_pi','wispr_telemetry','logs')
+    log_path = os.path.join('/','home','pi','wispr_pi','wispr_telemetry','logs','')
     if not os.path.exists(log_path):
         os.makedirs(log_path)
-    logging.basicConfig(filename=log_path+'/telemetry.log',
+    logging.basicConfig(filename=log_path+'telemetry_'+datetime.strftime(datetime.now(),'%d%b%Y')+'.log',
                         level=logging.NOTSET,
                         format='%(asctime)s, %(name)s - %(levelname)s - %(message)s')
     
