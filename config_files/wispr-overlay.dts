@@ -1,0 +1,48 @@
+/* Enable SDIO from MMC interface via GPIOs 22-27 for RPi 3B while disabling Wifi */
+
+/dts-v1/;
+/plugin/;
+
+/{
+   compatible = "brcm,bcm2708";
+
+   fragment@0 {
+      target = <&mmc>;
+      __overlay__ {
+         status = "disabled";
+      };
+   };
+
+   fragment@1 {
+      target = <&soc>;
+      __overlay__ {
+         #address-cells = <1>;
+         #size-cells = <1>;
+
+         mymmc: mymmc@7e300000 {
+            compatible = "brcm,bcm2835-mmc";
+            reg = <0x7e300000 0x100>;
+            interrupts = <2 30>;
+            clocks = <&clk_mmc>;
+            dmas = <&dma 11>;
+            dma-names = "rx-tx";
+            brcm,overclock-50 = <0>;
+            pinctrl-names = "default";
+            pinctrl-0 = <&mymmc_pins>;
+            bus-width = <4>;
+            status = "okay";
+         };
+      };
+   };
+
+   fragment@2 {
+      target = <&gpio>;
+      __overlay__ {
+         mymmc_pins: mymmc_pins {
+            brcm,pins = <22 23 24 25 26 27>;
+            brcm,function = <7 7 7 7 7 7>; /* ALT3 = SD1 */
+            brcm,pull = <0 2 2 2 2 2>;
+         };
+      };
+   };
+};
