@@ -23,11 +23,9 @@ sudo crontab /home/pi/wispr_pi/config_files/crontab.bak
  
 4. If using AWS S3 to store data in the cloud, please `pip install boto3` and follow the instructions in "How to Install AWS-CLI on rPi.pdf" to set up S3 access keys.
 
-5. Set up the additional rPi settings as specified in wispr_pi.docx - files are backed up in ./config_files
+5. Reboot and ensure a pressure sensor log is recorded in /home/pi/wispr_pi/PressureSensor/logs
 
-6. Reboot and ensure a pressure sensor log is recorded in /home/pi/wispr_pi/PressureSensor/logs
-
-7. Navigate into config_files and compile the dts overlay using dtc. Then copy it into the overlays folder (and make sure it exists there afterwards):
+6. Navigate into config_files and compile the dts overlay using dtc. Then copy it into the overlays folder (and make sure it exists there afterwards):
 ```bash
 cd /home/pi/wispr_pi/config_files
 dtc -@ -I dts -O dtb -o wispr.dtbo wispr-overlay.dts
@@ -36,13 +34,13 @@ sudo cp wispr.dtbo /boot/overlays
 
 The following steps are related to those listed in in wispr_rpi.docx
 
-8. First install support for exFAT on your RPi using the following commands:
+7. First install support for exFAT on your RPi using the following commands:
 ```bash
 sudo apt-get update
 sudo apt-get install exfat-fuse  exfat-utils 
 ```
 
-9. Navigate to the boot configuration file and add the following lines:
+8. Navigate to the boot configuration file and add the following lines:
 ```bash
 # Enable 2nd SD card using the custom overlay
 dtoverlay=wispr,poll_once=off
@@ -51,7 +49,7 @@ dtoverlay=wispr,poll_once=off
 enable_uart=1
 ```
 
-10. Open up the rc.local file and add the following lines to the bottom of the file to mount the SD card when the Pi boots
+9. Open up the rc.local file and add the following lines to the bottom of the file to mount the SD card when the Pi boots
 ```bash
 sudo nano /etc/rc.local
 
