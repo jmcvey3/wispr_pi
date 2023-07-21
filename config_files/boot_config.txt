@@ -78,8 +78,10 @@ otg_mode=1
 arm_boost=1
 
 # Enable second SD card
-dtparam=sdio_overclock=25 # This makes the Pi4 Rev 1.1 work for some reason
-dtoverlay=sdio,poll_once=off
+#dtparam=sdio_overclock=25 # This may make the Pi4 Rev 1.1 work for some reason
+#dtoverlay=sdio,poll_once=off
+
+dtoverlay=wispr,poll_once=off  # Use custom overlay
 
 [all]
 enable_uart=1

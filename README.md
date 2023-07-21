@@ -10,13 +10,13 @@ git submodule update --init --remote
 ```
 2. Navigate to 'blue_robotics_ms5837' (pressure sensor) and install:
 ```bash
-    cd /home/pi/wispr_pi/pressure_sensor/blue_robotics_mw5837
-    sudo pip install -e .
+cd /home/pi/wispr_pi/pressure_sensor/blue_robotics_mw5837
+sudo pip install -e .
 ```
 
 3. Use the backup crontab ('crontab.bak') and restore the root crontab 
 ```bash
-    sudo crontab /home/pi/wispr_pi/config_files/crontab.bak
+sudo crontab /home/pi/wispr_pi/config_files/crontab.bak
 ```
    The crontab is set to start recording pressure sensor data on boot, as well as to send data to backup
    every 5 minutes.
@@ -26,3 +26,35 @@ git submodule update --init --remote
 5. Set up the additional rPi settings as specified in wispr_pi.docx - files are backed up in ./config_files
 
 6. Reboot and ensure a pressure sensor log is recorded in /home/pi/wispr_pi/PressureSensor/logs
+
+7. Navigate into config_files and compile the dts overlay using dtc. Then copy it into the overlays folder (and make sure it exists there afterwards):
+```bash
+cd /home/pi/wispr_pi/config_files
+dtc -@ -I dts -O dtb -o wispr.dtbo wispr-overlay.dts
+sudo cp wispr.dtbo /boot/overlays
+```
+
+The following steps are related to those listed in in wispr_rpi.docx
+
+8. First install support for exFAT on your RPi using the following commands:
+```bash
+sudo apt-get update
+sudo apt-get install exfat-fuse  exfat-utils 
+```
+
+9. Navigate to the boot configuration file and add the following lines:
+```bash
+# Enable 2nd SD card using the custom overlay
+dtoverlay=wispr,poll_once=off
+
+# Enable UART communication for the wispr
+enable_uart=1
+```
+
+10. Open up the rc.local file and add the following lines to the bottom of the file to mount the SD card when the Pi boots
+```bash
+sudo nano /etc/rc.local
+
+mkdir /media/wispr_sd
+sudo mount -t exfat /dev/mmcblk1p1 /media/wispr_sd
+```
