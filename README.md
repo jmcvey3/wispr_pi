@@ -40,10 +40,11 @@ sudo apt-get update
 sudo apt-get install exfat-fuse exfat-utils 
 ```
 
-8. Navigate to the boot configuration file and add the following lines:
+8. Navigate to the boot configuration file (`sudo nano /boot/config.txt`) and add the following lines:
 ```bash
-# Enable 2nd SD card using the custom overlay
-dtoverlay=wispr,poll_once=off
+# Enable 2nd SD card using the custom overlay (disables wifi)
+dtparam=sdio_overclock=25
+dtoverlay=sdio,poll_once=off
 
 # Enable UART communication for the wispr
 enable_uart=1

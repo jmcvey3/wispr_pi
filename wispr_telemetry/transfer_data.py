@@ -139,8 +139,8 @@ if __name__ == "__main__":
     # ext = '.txt'
     # publish_data(data_dir, schema, ext)
 
-    # #### Pressure ####
-    # data_dir = os.path.join('/','home','pi','wispr_pi','pressure_sensor','data')
-    # schema = 'pressure'
-    # ext = '.csv'
-    # publish_data(data_dir, schema, ext)
+    #### Pressure ####
+    data_dir = os.path.join('/','home','pi','wispr_pi','pressure_sensor','data')
+    schema = 'pressure'
+    ext = '.csv'
+    publish_data(data_dir, schema, ext)
