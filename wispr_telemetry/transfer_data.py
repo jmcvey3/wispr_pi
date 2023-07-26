@@ -28,7 +28,7 @@ SERVER = '192.168.0.2'
 BUCKET = 'hydrophone_drifters'
 
 ###############################################################################
-def save_to_aws(filepath, filename, shema):
+def save_to_aws(filepath, filename, schema):
     import boto3
     # Use raspberry pi serial number to differentiate between drifters
     sn = get_rpi_serial()
@@ -123,22 +123,24 @@ def publish_data(data_dir, schema, ext):
 if __name__ == "__main__":
     init_logger()
 
-    #### Hydrophone ####
-    # TODO Create data product to send to server
-    data_dir = os.path.join('/','media','wispr_sd','hydrophone')
-    schema = 'hydrophone'
-    ext = '.wav'
-    publish_data(data_dir, schema, ext)
+    # Uncomment lines for testing
 
-    #### GPS ####
-    # TODO Convert NMEA strings to csv
-    data_dir = os.path.join('/','media','wispr_sd','gps')
-    schema = 'gps'
-    ext = '.txt'
-    publish_data(data_dir, schema, ext)
+    # #### Hydrophone ####
+    # # TODO Create data product to send to server
+    # data_dir = os.path.join('/','media','wispr_sd','hydrophone')
+    # schema = 'hydrophone'
+    # ext = '.wav'
+    # publish_data(data_dir, schema, ext)
 
-    #### Pressure ####
-    data_dir = os.path.join('/','home','pi','wispr_pi','pressure_sensor','data')
-    schema = 'pressure'
-    ext = '.csv'
-    publish_data(data_dir, schema, ext)
+    # #### GPS ####
+    # # TODO Convert NMEA strings to csv
+    # data_dir = os.path.join('/','media','wispr_sd','gps')
+    # schema = 'gps'
+    # ext = '.txt'
+    # publish_data(data_dir, schema, ext)
+
+    # #### Pressure ####
+    # data_dir = os.path.join('/','home','pi','wispr_pi','pressure_sensor','data')
+    # schema = 'pressure'
+    # ext = '.csv'
+    # publish_data(data_dir, schema, ext)

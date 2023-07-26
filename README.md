@@ -37,7 +37,7 @@ The following steps are related to those listed in in wispr_rpi.docx
 7. First install support for exFAT on your RPi using the following commands:
 ```bash
 sudo apt-get update
-sudo apt-get install exfat-fuse  exfat-utils 
+sudo apt-get install exfat-fuse exfat-utils 
 ```
 
 8. Navigate to the boot configuration file and add the following lines:
@@ -49,10 +49,8 @@ dtoverlay=wispr,poll_once=off
 enable_uart=1
 ```
 
-9. Open up the rc.local file and add the following lines to the bottom of the file to mount the SD card when the Pi boots
+9. Open up the rc.local file (`sudo nano /etc/rc.local`) and add the following lines to the bottom of the file to mount the SD card when the Pi boots
 ```bash
-sudo nano /etc/rc.local
-
 mkdir /media/wispr_sd
 sudo mount -t exfat /dev/mmcblk1p1 /media/wispr_sd
 ```
