@@ -49,9 +49,3 @@ dtoverlay=sdio,poll_once=off
 # Enable UART communication for the wispr
 enable_uart=1
 ```
-
-9. Open up the rc.local file (`sudo nano /etc/rc.local`) and add the following lines to the bottom of the file to mount the SD card when the Pi boots
-```bash
-mkdir /media/wispr_sd
-sudo mount -t exfat /dev/mmcblk1p1 /media/wispr_sd
-```

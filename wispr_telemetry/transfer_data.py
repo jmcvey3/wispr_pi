@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 import logging
 from glob import glob
@@ -82,16 +83,25 @@ def init_logger():
     
     logging.info('-------------------transfer_data.py-----------------')
 
-    if os.path.exists('/media/wispr_sd'):
-        logging.debug('SD card directory accessible')
+    # These mount automatically?
+    card1 = '/media/pi/WISPR_SD1'
+    card2 = '/media/pi/WISPR_SD2'
+    if os.path.exists(card1):
+        logging.info('WISPR_SD1 accessible')
+        base_path = card1
+    elif os.path.exists(card2):
+        logging.debug('WISPR_SD2 accessible')
+        base_path = card2
     else:
         logging.error('SD card directory not found')
+
+    return base_path
         
 
-def publish_data(data_dir, schema, ext):
+def publish_data(data_dir, schema, ext, card):
     logging.info(f"Transferring {schema}...")
 
-    data_cache_dir = os.path.join('/','media','wispr_sd',schema+'.backup','')
+    data_cache_dir = os.path.join(card, schema+'.backup','')
 
     if not os.path.exists(data_cache_dir):
        os.makedirs(data_cache_dir)
@@ -113,15 +123,16 @@ def publish_data(data_dir, schema, ext):
             else:
                 secure_copy(fpath, filename, schema)
         try:
-            os.rename(fpath, os.path.join(data_cache_dir,filename))
-        except:
-            pass
+            shutil.move(fpath, os.path.join(data_cache_dir,filename))
+            logging.info(f"Saving file: {fpath}")
+        except Exception as e:
+            logging.error(e)
     
     logging.info("Completed transfer")
 
 
 if __name__ == "__main__":
-    init_logger()
+    card = init_logger()
 
     # Uncomment lines for testing
 
@@ -130,17 +141,17 @@ if __name__ == "__main__":
     # data_dir = os.path.join('/','media','wispr_sd','hydrophone')
     # schema = 'hydrophone'
     # ext = '.wav'
-    # publish_data(data_dir, schema, ext)
+    # publish_data(data_dir, schema, ext, card)
 
     # #### GPS ####
     # # TODO Convert NMEA strings to csv
     # data_dir = os.path.join('/','media','wispr_sd','gps')
     # schema = 'gps'
     # ext = '.txt'
-    # publish_data(data_dir, schema, ext)
+    # publish_data(data_dir, schema, ext, card)
 
     #### Pressure ####
     data_dir = os.path.join('/','home','pi','wispr_pi','pressure_sensor','data')
     schema = 'pressure'
     ext = '.csv'
-    publish_data(data_dir, schema, ext)
+    publish_data(data_dir, schema, ext, card)
