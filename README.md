@@ -88,7 +88,6 @@ The configured cron jobs are:
 | Schedule | Command |
 |----------|---------|
 | On reboot | Starts `TDH_pressure.py` via `pressurelauncher.sh` |
-| Every 5 minutes | Runs `transfer_data.py` to back up SD card data |
 
 ### 7. Reboot and verify
 
