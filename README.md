@@ -87,6 +87,7 @@ The configured cron jobs are:
 
 | Schedule | Command |
 |----------|---------|
+| On reboot | Creates directory for and mounts available WISPR SD card |
 | On reboot | Starts `TDH_pressure.py` via `pressurelauncher.sh` |
 
 ### 7. Reboot and verify
@@ -98,10 +99,10 @@ sudo reboot
 After reboot, confirm logging is active:
 
 ```bash
-ls /home/pi/wispr_pi/pressure_sensor/logs/
+ls /media/wispr_sd/pressure_sensor/logs/
 ```
 
-A log file named `pressureSensorLog_<date>.log` should be present.
+A log file named `pressure_sensor.<date>.log` should be present.
 
 ## Pressure Sensor Data
 
@@ -111,7 +112,7 @@ A log file named `pressureSensorLog_<date>.log` should be present.
 UTC timestamp, pressure (psi), temperature (°F), depth (m)
 ```
 
-Example output file: [`pressure_sensor/data/pressureSensorData_08May2023.csv`](pressure_sensor/data/pressureSensorData_08May2023.csv)
+Example output file: [`pressure_sensor/data/pressure_sensor.20230508.csv`](pressure_sensor/data/pressure_sensor.20230508.csv)
 
 ## WISPR Firmware
 
