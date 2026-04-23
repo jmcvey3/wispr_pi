@@ -62,22 +62,23 @@ while True:
         )
         logging.info("Filename: %s" % fname)
 
-        with open(fname, "w", newline="\n") as pressure_out:
+        with open(fname, "w", newline="\n") as f_out:
             logging.info("Open file for writing: %s" % fname)
+            f_out.write("timestamp,pressure_dbar,temperature_C,depth_m\n")
             t_end = time.time() + burst_seconds
             isample = 0
             while time.time() <= t_end or isample < pressure_samples:
                 try:
-                    P = sensor.pressure(ms5837.UNITS_psi)
-                    T = sensor.temperature(ms5837.UNITS_Farenheit)
+                    P = sensor.pressure(ms5837.UNITS_bar) * 10
+                    T = sensor.temperature(ms5837.UNITS_Centigrade)
                     D = sensor.depth()
                 except Exception as e:
                     logging.error("Error reading pressure sensor data")
                     logging.error(e)
 
                 timestamp = "{:%Y-%m-%d %H:%M:%S.%f}".format(now)
-                pressure_out.write("%s,%f,%f,%f\n" % (timestamp, P, T, D))
-                pressure_out.flush()
+                f_out.write("%s,%f,%f,%f\n" % (timestamp, P, T, D))
+                f_out.flush()
 
                 isample = isample + 1
                 if time.time() >= t_end and 0 < pressure_samples - isample <= 40:
