@@ -72,6 +72,8 @@ while True:
                     P = sensor.pressure(ms5837.UNITS_bar) * 10
                     T = sensor.temperature(ms5837.UNITS_Centigrade)
                 except Exception as e:
+                    P = -9999
+                    T = -9999
                     logging.error("Error reading pressure sensor data")
                     logging.error(e)
 
