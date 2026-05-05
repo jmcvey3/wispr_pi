@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 
 import ms5837
 
-
 # Define loop constants
 burst_time = 0
 burst_seconds = 600
@@ -34,22 +33,33 @@ logging.basicConfig(
     format="%(asctime)s, %(filename)s - [%(levelname)s] - %(message)s",
     level=logging.DEBUG,
 )
-logging.info("-------------------TDH_pressuresensor.py-----------------")
+logging.info("Starting tdh_pressure.py")
 
 # initialize pressure sensor
 sensor = ms5837.MS5837_30BA()  # Default I2C bus is 1 (Raspberry Pi 3)
-sensor.setFluidDensity(ms5837.DENSITY_SALTWATER)
+# sensor.setFluidDensity(ms5837.DENSITY_SALTWATER)
 
-# We must initialize the sensor before reading it
-if not sensor.init():
-    logging.info("Sensor could not be initialized")
+# Initialize the sensor and report any errors
+try:
+    if not sensor.init():
+        logging.info("Sensor could not be initialized")
+        exit(1)
+except Exception as e:
+    logging.error("Error initializing pressure sensor")
+    logging.error(e)
     exit(1)
 
-# We have to read values from sensor to update pressure and temperature
-if not sensor.read():
-    logging.error("Sensor read failed!")
+# Perform a read to populate the sensor's internal state and report any errors
+try:
+    if not sensor.read():
+        logging.error("Sensor read failed!")
+        exit(1)
+except Exception as e:
+    logging.error("Error reading pressure sensor data")
+    logging.error(e)
     exit(1)
 
+# Log pressure and temperature readings
 logging.info("Pressure sensor initialized successfully")
 isample = 0
 while True:

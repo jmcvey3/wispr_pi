@@ -5,7 +5,7 @@
 # Uncomment some or all of these to enable the optional hardware interfaces
 dtparam=i2c_arm=on
 #dtparam=i2s=on
-dtparam=spi=on
+#dtparam=spi=on
 
 # Enable audio (loads snd_bcm2835)
 dtparam=audio=on
@@ -50,13 +50,19 @@ arm_boost=1
 #dtoverlay=dwc2,dr_mode=host
 
 [all]
-# Enable second SD card
-# poll_once=off is unreliable on RPi 4 kernel 6.x — the SDIO bus may stop retrying
-# before WISPR finishes powering the card. Use polling_ms to keep retrying every 1 s.
-dtoverlay=sdio,poll_once=off,polling_ms=1000
+## Enable 2nd SD card.
+# bus_width=1 is a hardware requirement: the WISPR board only routes CLK (GPIO22),
+# CMD (GPIO23), and DAT0 (GPIO24) to the RPi. DAT2 (GPIO26) and DAT3 (GPIO27) are
+# shared with WISPR's HSMCI controller — 4-bit mode causes bus contention.
+# polling_ms avoids the RPi4 kernel poll_once race with WISPR's sd_card_enable().
+dtoverlay=sdio,poll_once=off,polling_ms=1000,bus_width=1
 
-# Enable comms with WISPR
-# disable-bt frees the PL011 UART (ttyAMA0) for GPIO14/15 on RPi 4,
-# where BT otherwise occupies PL011 and forces serial0 onto the unstable mini-UART (ttyS0).
-dtoverlay=disable-bt
+# Uncomment to slow SDIO clock if signal integrity issues persist:
+# dtparam=sdio_overclock=10
+
+# Enable UART communication for WISPR
 enable_uart=1
+# On RPi 4, Bluetooth occupies the PL011 UART by default, pushing serial0 onto the 
+# mini-UART (ttyS0) whose baud rate is tied to the VPU clock and is unreliable. 
+# disable-bt frees PL011 for GPIO14/15 (serial0 -> /dev/ttyAMA0).
+dtoverlay=disable-bt

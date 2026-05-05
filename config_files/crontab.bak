@@ -22,5 +22,4 @@
 # 
 # m h  dom mon dow   command
 
-@reboot sleep 60 && mkdir -p /media/wispr_sd && mount /dev/mmcblk1p1 /media/wispr_sd
-@reboot sleep 90 && bash /home/pi/wispr_pi/pressure_sensor/pressurelauncher.sh
+@reboot bash /home/pi/wispr_pi/pressure_sensor/mountlauncher.sh && bash /home/pi/wispr_pi/pressure_sensor/pressurelauncher.sh
