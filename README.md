@@ -9,6 +9,9 @@ Raspberry Pi interfacing scripts for the [WISPR](wispr2_sw/README.md) (Wideband 
 
 ```
 wispr_pi/
+├── clock/
+│   ├── set_clock.sh            # Reads WTM epoch from WISPR serial and sets system clock
+│   └── wispr-set-clock.service # systemd service to run set_clock.sh on boot
 ├── config_files/           # Raspberry Pi boot and crontab configuration backups
 ├── pressure_sensor/
 │   ├── data/               # CSV pressure/temperature/depth data output
@@ -45,7 +48,7 @@ Open Raspberry Pi Imager software and flash a fresh SD card. For Raspberry Pi 4B
 6. Once you see a router-assigned IP (under "wlan0"), unplug the ethernet cable.
 7. Turn wifi back on your computer and ssh into the rPi using the IP address (`ssh pi@<xxx.xxx.xxx.xxx>`).
 
-### 3. Clone the repository
+### 3. Clone the Repository
 Clone or download the repository to your laptop, then copy to the Raspberry Pi:
 ```bash
 git clone https://github.com/jmcvey3/wispr_pi.git .
@@ -74,14 +77,14 @@ sudo apt-get update
 sudo apt-get install python3-smbus2
 ```
 
-### 6. Install exFAT support (required for WISPR SD card)
+### 6. Install exFAT Support (required for WISPR SD card)
 
 ```bash
 sudo apt-get install autoconf libtool pkg-config
 sudo apt-get install exfatprogs
 ```
 
-### 7. Configure the Raspberry Pi boot settings
+### 7. Configure the Raspberry Pi Boot Settings
 
 Edit `/boot/firmware/config.txt` (`sudo nano /boot/firmware/config.txt`) and add the following lines. See [config_files/boot_config.txt](config_files/boot_config.txt) for a reference backup:
 
@@ -93,10 +96,6 @@ dtoverlay=sdio,poll_once=off,polling_ms=1000
 # Slow down the SDIO clock to not crash the RPi
 dtparam=sdio_overclock=10
 
-# NOTE: SPI must remain disabled (dtparam=spi=on must NOT be set).
-# GPIO8-11 (SPI0) are wired to WISPR; enabling the RPi SPI controller
-# would drive those lines and interfere with WISPR's operation.
-
 # Enable UART communication for WISPR
 enable_uart=1
 
@@ -104,7 +103,7 @@ enable_uart=1
 dtoverlay=disable-bt
 ```
 
-### 8. Restore the crontab
+### 8. Restore the Crontab
 
 Install the backup crontab to mount the SD card and start pressure logging after boot:
 
@@ -120,7 +119,32 @@ The configured cron jobs are:
 
 Mount attempts and failures are logged to `pressure_sensor/logs/mountlauncher.log`.
 
-### 9. Reboot and verify
+### 9. Enable the clock sync service
+
+Next, we need to set up the RPi to look for clock messages from the WISPR to update it's clock.
+The WISPR sends one message shortly after the RPi boots (45 s, to be exact) and then repeats every 5 minutes.
+
+The following installs a systemd service that listens on the serial port for `WTM,<epoch>` messages from the WISPR and sets the RPi system clock accordingly. 
+
+```bash
+sudo cp /home/pi/wispr_pi/clock/wispr-set-clock.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now wispr-set-clock
+```
+
+Verify it is running:
+
+```bash
+systemctl status wispr-set-clock
+```
+
+The service will start automatically on every subsequent boot. Clock sync events are logged to the system journal and can be viewed with:
+
+```bash
+journalctl -t wispr-set-clock
+```
+
+### 10. Reboot and Verify
 
 ```bash
 sudo reboot
@@ -138,6 +162,30 @@ ls /media/wispr_sd/pressure_sensor/logs/
 ```
 
 A log file named `pressure_sensor.<date>.log` should be present in the latter.
+
+## Reading WISPR Com & Console Output
+Because the WISPR com and console output are directed through UART1, and UART1 is now connected
+to the RPi, one must remote into the RPi and stop the clock script to see the WISPR output.
+
+First, ssh into the RPi:
+```bash
+ssh pi@raspberrypi.local
+```
+Then stop the clock update script and open the serial port:
+```bash
+sudo systemctl stop wispr-set-clock
+stty -F /dev/serial0 9600
+cat /dev/serial0
+```
+
+Use `ctrl+c` to quit. Then restart the clock update script:
+```bash
+sudo systemctl start wispr-set-clock
+```
+
+Note: any `WTM` clock sync messages sent by the WISPR while the service is stopped will be
+printed to the terminal but not applied. The next sync will occur within 5 minutes once the
+service is restarted.
 
 ## Pressure Sensor Data
 

@@ -1,0 +1,15 @@
+[Unit]
+Description=Sync RPi system clock from WISPR RTC
+# Wait until the serial port device is available
+After=dev-serial0.device
+Requires=dev-serial0.device
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /home/pi/wispr_pi/clock/set_clock.sh
+# Restart automatically if the script exits (e.g. serial port closes on WISPR reboot)
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
