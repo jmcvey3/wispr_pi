@@ -7,7 +7,7 @@ import ms5837
 
 # Define loop constants
 burst_time = 0
-burst_seconds = 600
+burst_seconds = 60
 burst_interval = 1
 pressureFreq = 4
 pressure_samples = pressureFreq * burst_seconds
@@ -64,42 +64,40 @@ logging.info("Pressure sensor initialized successfully")
 isample = 0
 while True:
     now = datetime.now(timezone.utc)
+    # Start a new burst of pressure data collection at the specified time and interval
     if now.minute == burst_time or now.minute % burst_interval == 0 and now.second == 0:
-
+        # Create a new data file for this sample burst of pressure data collection
         fname = os.path.join(
             data_path,
-            "pressure_sensor." + datetime.strftime(now, "%Y%m%d") + ".csv",
+            "pressure_sensor." + datetime.strftime(now, "%Y%m%d.%H%M%S") + ".csv",
         )
-        logging.info("Filename: %s" % fname)
+        logging.info("Open file for writing: %s" % fname)
+
+        isample = 0
+        t_end = time.time() + burst_seconds
 
         with open(fname, "w", newline="\n") as f_out:
-            logging.info("Open file for writing: %s" % fname)
             f_out.write("timestamp,pressure_dbar,temperature_C\n")
-            t_end = time.time() + burst_seconds
-            isample = 0
-            while time.time() <= t_end or isample < pressure_samples:
+
+            while (time.time() <= t_end) or (isample < pressure_samples):
+                timestamp = datetime.now(timezone.utc)
                 try:
+                    sensor.read()
                     P = sensor.pressure(ms5837.UNITS_bar) * 10
                     T = sensor.temperature(ms5837.UNITS_Centigrade)
                 except Exception as e:
                     P = -9999
                     T = -9999
-                    logging.error("Error reading pressure sensor data")
+                    logging.error("Error reading pressure sensor")
                     logging.error(e)
 
-                timestamp = "{:%Y-%m-%d %H:%M:%S.%f}".format(now)
-                f_out.write("%s,%f,%f\n" % (timestamp, P, T))
+                timestr = "{:%Y-%m-%d %H:%M:%S.%f}".format(timestamp)
+                f_out.write("%s,%f,%f\n" % (timestr, P, T))
                 f_out.flush()
 
                 isample = isample + 1
-                if time.time() >= t_end and 0 < pressure_samples - isample <= 40:
-                    continue
-                elif time.time() > t_end and pressure_samples - isample > 40:
-                    break
-
-                logging.info("Pressure Sample %s completed" % isample)
 
                 # Hard-coded sleep to control recording rate. Not ideal but works
-                time.sleep(0.065)
+                time.sleep(1 / pressureFreq)
 
-        time.sleep(0.50)
+        logging.info("Write complete")

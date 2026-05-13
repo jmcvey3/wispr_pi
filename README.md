@@ -115,7 +115,7 @@ The configured cron jobs are:
 
 | Schedule | Command |
 |----------|---------|
-| On reboot | Runs `mountlauncher.sh`, which retries mounting the WISPR SD card every 10 s (up to 20 attempts) until it succeeds, then starts `tdh_pressure.py` via `pressurelauncher.sh` |
+| On reboot | Runs `mountlauncher.sh`, which retries mounting the WISPR SD card every 10 s (up to 60 attempts) until it succeeds, then starts `tdh_pressure.py` via `pressurelauncher.sh` |
 
 Mount attempts and failures are logged to `pressure_sensor/logs/mountlauncher.log`.
 
@@ -147,7 +147,7 @@ journalctl -t wispr-set-clock
 ### 10. Reboot and Verify
 
 ```bash
-sudo reboot
+sudo reboot now
 ```
 
 After reboot, you'll no longer be able to ssh in over Wifi.
