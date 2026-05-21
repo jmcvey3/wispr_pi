@@ -3,7 +3,8 @@
 Raspberry Pi interfacing scripts for the [WISPR](wispr2_sw/README.md) (Wideband Intelligent Signal Processing and Recording) acoustic recorder. This repository provides:
 
 - **Pressure logging** via a Blue Robotics MS5837-30BA sensor, recorded automatically on boot
-- **WISPR firmware** (as a submodule) — Atmel Studio 7 C firmware for the WISPR V2 board targeting hydrophone deployments such as drifters, CRAB buoys, perimeter moorings, and Hawaii gliders
+- **WISPR firmware** (as a submodule) — Atmel Studio 7 C firmware for the WISPR V2.1 board targeting drifting hydrophone
+buoy deployments.
 
 ## Repository Structure
 
@@ -189,13 +190,20 @@ service is restarted.
 
 ## Pressure Sensor Data
 
-[`tdh_pressure.py`](pressure_sensor/tdh_pressure.py) samples the MS5837 sensor at **4 Hz** in 600-second bursts. Each burst writes a CSV file to `pressure_sensor/data/` with the columns
+[`tdh_pressure.py`](pressure_sensor/tdh_pressure.py) samples the MS5837 sensor at **4 Hz** in 60-second bursts. Each burst writes a CSV file to `pressure_sensor/data/` with the columns
 
 ```
 timestamp (UTC), pressure (dbar), temperature (°C)
 ```
 
-Example output file: [`pressure_sensor/data/pressure_sensor.20230508.csv`](pressure_sensor/data/pressure_sensor.20230508.csv)
+## PNNL/OSU Drifter Buoy Electronics Startup Procedure
+1. Power on the buoy using the dummy plug on the top of the spar buoy. If power from the battery is flowing, the red LED will turn on.
+2. The WISPR powers on and starts searching for GPS signal. Once a PPS signal is locked, it powers on the Raspberry Pi and begins hydrophone data collection at 50 kHz and writing a new dat file every 30 seconds.
+3. Once the RPi powers on, the green LED in the top plate of the spar buoy lights up. The RPi begins polling for the WISPR's secondary SD card, and it will make attempts to do so for 10 minutes.
+4. Once the card is mounting, it begins recording pressure sensor readings and stores those files on the SD card.
+5. After powering on the RPi and running data collection, the WISPR sends a synchronization message to the RPi's clock and updates the GPS location every 15 seconds. It periodically sends a clock update message to the RPi then every 5 minutes.
+6. To power down the buoy, remove the dummy plug. 
+7. Passive acoustic and pressure data must be recovered from the WISPR SD cards. Wipe the cards before each deployment.
 
 ## WISPR Firmware
 

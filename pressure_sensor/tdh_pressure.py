@@ -1,14 +1,14 @@
 import os
 import time
 import logging
-from datetime import datetime, timezone
-
+from datetime import datetime, timedelta, timezone
 import ms5837
 
 # Define loop constants
-burst_time = 0
+sensor_read_time = (
+    0.044  # s, time it takes to read the sensor (experimentally determined)
+)
 burst_seconds = 60
-burst_interval = 1
 pressureFreq = 4
 pressure_samples = pressureFreq * burst_seconds
 
@@ -33,16 +33,16 @@ logging.basicConfig(
     format="%(asctime)s, %(filename)s - [%(levelname)s] - %(message)s",
     level=logging.DEBUG,
 )
+logging.info("-------------------------------")
 logging.info("Starting tdh_pressure.py")
 
-# initialize pressure sensor
-sensor = ms5837.MS5837_30BA()  # Default I2C bus is 1 (Raspberry Pi 3)
-# sensor.setFluidDensity(ms5837.DENSITY_SALTWATER)
+# Initialize pressure sensor
+sensor = ms5837.MS5837_30BA()  # Default I2C bus is 1
 
 # Initialize the sensor and report any errors
 try:
     if not sensor.init():
-        logging.info("Sensor could not be initialized")
+        logging.error("Sensor could not be initialized")
         exit(1)
 except Exception as e:
     logging.error("Error initializing pressure sensor")
@@ -63,41 +63,41 @@ except Exception as e:
 logging.info("Pressure sensor initialized successfully")
 isample = 0
 while True:
+    # Create a new data file for this sample burst of pressure data collection
     now = datetime.now(timezone.utc)
-    # Start a new burst of pressure data collection at the specified time and interval
-    if now.minute == burst_time or now.minute % burst_interval == 0 and now.second == 0:
-        # Create a new data file for this sample burst of pressure data collection
-        fname = os.path.join(
-            data_path,
-            "pressure_sensor." + datetime.strftime(now, "%Y%m%d.%H%M%S") + ".csv",
-        )
-        logging.info("Open file for writing: %s" % fname)
+    fname = os.path.join(
+        data_path,
+        "pressure_sensor." + datetime.strftime(now, "%Y%m%d.%H%M%S") + ".csv",
+    )
+    logging.info("Open file for writing: %s" % fname)
 
-        isample = 0
-        t_end = time.time() + burst_seconds
+    isample = 0
+    t_end = now + timedelta(seconds=burst_seconds)
 
-        with open(fname, "w", newline="\n") as f_out:
-            f_out.write("timestamp,pressure_dbar,temperature_C\n")
+    with open(fname, "w", newline="\n") as f_out:
+        f_out.write("timestamp,pressure_dbar,temperature_C\n")
 
-            while (time.time() <= t_end) or (isample < pressure_samples):
-                timestamp = datetime.now(timezone.utc)
-                try:
-                    sensor.read()
-                    P = sensor.pressure(ms5837.UNITS_bar) * 10
-                    T = sensor.temperature(ms5837.UNITS_Centigrade)
-                except Exception as e:
-                    P = -9999
-                    T = -9999
-                    logging.error("Error reading pressure sensor")
-                    logging.error(e)
+        while (datetime.now(timezone.utc) <= t_end) or (isample <= pressure_samples):
+            timestamp = datetime.now(timezone.utc)
+            try:
+                sensor.read()
+                P = sensor.pressure(ms5837.UNITS_bar) * 10
+                T = sensor.temperature(ms5837.UNITS_Centigrade)
+            except Exception as e:
+                P = -9999
+                T = -9999
+                logging.error("Error reading pressure sensor")
+                logging.error(e)
 
-                timestr = "{:%Y-%m-%d %H:%M:%S.%f}".format(timestamp)
-                f_out.write("%s,%f,%f\n" % (timestr, P, T))
-                f_out.flush()
+            timestr = "{:%Y-%m-%d %H:%M:%S.%f}".format(timestamp)
+            f_out.write("%s,%f,%f\n" % (timestr, P, T))
+            f_out.flush()
 
-                isample = isample + 1
+            isample = isample + 1
 
-                # Hard-coded sleep to control recording rate. Not ideal but works
-                time.sleep(1 / pressureFreq)
+            # Hard-code sleep to control recording rate, depends on RPi load and sensor read time.
+            # With testing, if pressureFreq = 4 Hz, then the actual rate is about 3.40 Hz,
+            # which means the sensor read time is about 0.044 seconds
+            time.sleep(1 / pressureFreq - sensor_read_time)
 
-        logging.info("Write complete")
+    logging.info("Write complete")
