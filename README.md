@@ -15,11 +15,9 @@ wispr_pi/
 │   └── wispr-set-clock.service # systemd service to run set_clock.sh on boot
 ├── config_files/           # Raspberry Pi boot and crontab configuration backups
 ├── pressure_sensor/
-│   ├── data/               # CSV pressure/temperature/depth data output
-│   ├── logs/               # Pressure logger log files
 │   ├── ms5837.py           # Blue Robotics MS5837 Python driver
-│   ├── mountlauncher.sh    # Retry-loop script to mount WISPR SD card on boot
-│   ├── pressurelauncher.sh # Bash script that runs logging script
+│   ├── mountlauncher.sh    # Waits for WISPR SDIO SD card to enumerate, then mounts it permanently
+│   ├── pressurelauncher.sh # Bash script that launches tdh_pressure.py
 │   └── tdh_pressure.py     # Burst pressure logging script
 └── wispr2_sw/              # WISPR V2 firmware source (git submodule, OSU branch)
 ```
@@ -27,7 +25,8 @@ wispr_pi/
 ## Prerequisites
 
 - Raspberry Pi 4 (Rev 1.2) running Raspberry Pi OS (64-bit)
-- Blue Robotics MS5837-30BA pressure/temperature sensor connected via I²C
+- Blue Robotics MS5837-30BA pressure/temperature sensor connected via I²C (GPIO2/3)
+- WISPR V2 board with SDIO secondary SD card wired to GPIO22–27
 - Python 3 with `smbus2` (`python3-smbus2`)
 - exFAT filesystem support (for WISPR SD card)
 
@@ -90,18 +89,41 @@ sudo apt-get install exfatprogs
 Edit `/boot/firmware/config.txt` (`sudo nano /boot/firmware/config.txt`) and add the following lines. See [config_files/boot_config.txt](config_files/boot_config.txt) for a reference backup:
 
 ```ini
-## Enable 2nd SD card using the custom overlay (disables WiFi).
-# polling_ms avoids the RPi4 kernel poll_once race with WISPR's sd_card_enable().
-dtoverlay=sdio,poll_once=off,polling_ms=1000
+# Disable audio — BCM2835 audio clocks GPIO12 (PWM0) which is wired to WISPR
+# and injects switching noise into acoustic recordings.
+dtparam=audio=off
 
-# Slow down the SDIO clock to not crash the RPi
-dtparam=sdio_overclock=10
+# Disable camera/display auto-detect — no peripherals attached, and probing
+# I2C on every boot causes transients.
+camera_auto_detect=0
+display_auto_detect=0
+
+# Use headless GPU overlay instead of full vc4-kms-v3d to reduce GPU activity.
+dtoverlay=vc4-fkms-v3d
+
+# Disable CPU boost — fixed frequency reduces supply current variation
+# that can couple into WISPR's analog front end.
+# arm_boost=1
+
+# Drive unused GPIO pins wired to WISPR to a defined low state.
+# Floating inputs act as antennas and inject noise into WISPR's signal chain.
+# 6: unknown, 8-11: SPI0 (disabled), 12: PWM0 (audio off)
+gpio=6,8,9,10,11,12=op,dl
+
+# Power down the WiFi/BT chip (BCM43455) entirely.
+dtoverlay=disable-wifi
+# Free PL011 UART for GPIO14/15 (serial0 -> /dev/ttyAMA0).
+dtoverlay=disable-bt
 
 # Enable UART communication for WISPR
 enable_uart=1
 
-# On RPi 4, Bluetooth occupies the PL011 UART by default, pushing serial0 onto the mini-UART (ttyS0) whose baud rate is tied to the VPU clock and is unreliable. disable-bt frees PL011 for GPIO14/15 (serial0 -> /dev/ttyAMA0).
-dtoverlay=disable-bt
+# Expose WISPR's secondary SD card via SDIO (GPIO22=CLK, GPIO23=CMD, GPIO24-27=DAT0-3).
+# poll_once=off polls continuously so the card is detected even if WISPR's
+# sd_card_enable() fires late (up to 90s post-boot after GPS PPS sync).
+# sdio_overclock=10 slows the SDIO clock to 10 MHz for signal integrity.
+dtoverlay=sdio,poll_once=off
+dtparam=sdio_overclock=10
 ```
 
 ### 8. Restore the Crontab
@@ -115,10 +137,10 @@ sudo crontab /home/pi/wispr_pi/config_files/crontab.bak
 The configured cron jobs are:
 
 | Schedule | Command |
-|----------|---------|
-| On reboot | Runs `mountlauncher.sh`, which retries mounting the WISPR SD card every 10 s (up to 60 attempts) until it succeeds, then starts `tdh_pressure.py` via `pressurelauncher.sh` |
+|----------|----------|
+| On reboot | Runs `mountlauncher.sh`, which waits up to 10 minutes for WISPR's SDIO SD card to enumerate (WISPR calls `sd_card_enable()` after GPS PPS sync, up to ~90s post-boot), mounts it permanently at `/media/wispr_sd`, then starts `tdh_pressure.py` via `pressurelauncher.sh` |
 
-Mount attempts and failures are logged to `pressure_sensor/logs/mountlauncher.log`.
+Mount attempts and failures are logged to `/media/wispr_sd/pressure_sensor/logs/mountlauncher.log`.
 
 ### 9. Enable the clock sync service
 
@@ -162,7 +184,7 @@ ls /media/wispr_sd/pressure_sensor/data/
 ls /media/wispr_sd/pressure_sensor/logs/
 ```
 
-A log file named `pressure_sensor.<date>.log` should be present in the latter.
+Both data files (`pressure_sensor.<date>.<time>.csv`) and log files (`pressure_sensor.<date>.log`) are written to the WISPR SD card.
 
 ## Reading WISPR Com & Console Output
 Because the WISPR com and console output are directed through UART1, and UART1 is now connected

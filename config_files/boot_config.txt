@@ -8,23 +8,28 @@ dtparam=i2c_arm=on
 #dtparam=spi=on
 
 # Enable audio (loads snd_bcm2835)
-dtparam=audio=on
+# DISABLED: BCM2835 audio uses the PWM peripheral, which clocks GPIO12 (PWM0).
+# GPIO12 is wired to WISPR — PWM switching noise corrupts acoustic recordings.
+dtparam=audio=off
 
 # Additional overlays and parameters are documented
 # /boot/firmware/overlays/README
 
 # Automatically load overlays for detected cameras
-camera_auto_detect=1
+# DISABLED: no camera attached; auto-detect probes I2C on every boot causing transients.
+camera_auto_detect=0
 
 # Automatically load overlays for detected DSI displays
-display_auto_detect=1
+# DISABLED: no display attached.
+display_auto_detect=0
 
 # Automatically load initramfs files, if found
 auto_initramfs=1
 
 # Enable DRM VC4 V3D driver
-dtoverlay=vc4-kms-v3d
-max_framebuffers=2
+# Replaced with headless overlay — no display is attached and vc4-kms-v3d
+# keeps the GPU active, adding unnecessary switching noise on the power rails.
+dtoverlay=vc4-fkms-v3d
 
 # Don't have the firmware create an initial video= setting in cmdline.txt.
 # Use the kernel's default instead.
@@ -37,7 +42,14 @@ arm_64bit=1
 disable_overscan=1
 
 # Run as fast as firmware / board allows
-arm_boost=1
+# DISABLED: CPU boost increases supply current variation, which couples into
+# WISPR's analog front end. Fixed frequency is quieter for acoustic deployments.
+#arm_boost=1
+
+# Drive unused GPIO pins wired to WISPR to a defined low state.
+# Floating inputs act as antennas and inject noise into WISPR's signal chain.
+# Pins: 6 (unknown), 8-11 (SPI0, disabled), 12 (PWM0, audio disabled)
+gpio=6,8,9,10,11,12=op,dl
 
 # cm4 and cm5 should not affect the WISPR interface
 [cm4]
@@ -50,19 +62,23 @@ arm_boost=1
 #dtoverlay=dwc2,dr_mode=host
 
 [all]
-## Enable 2nd SD card.
-# bus_width=1 is a hardware requirement: the WISPR board only routes CLK (GPIO22),
-# CMD (GPIO23), and DAT0 (GPIO24) to the RPi. DAT2 (GPIO26) and DAT3 (GPIO27) are
-# shared with WISPR's HSMCI controller — 4-bit mode causes bus contention.
-# polling_ms avoids the RPi4 kernel poll_once race with WISPR's sd_card_enable().
-dtoverlay=sdio,poll_once=off,polling_ms=1000,bus_width=1
-
-# Uncomment to slow SDIO clock if signal integrity issues persist:
-# dtparam=sdio_overclock=10
-
-# Enable UART communication for WISPR
-enable_uart=1
+# Power down the WiFi/BT chip entirely.
+# The chip itself generates RF/switching noise (32 kHz clock harmonics,
+# ~80 MHz PMIC switching). "disable-wifi" cuts chip power at the
+# hardware level, which is more thorough than software rfkill.
+dtoverlay=disable-wifi
 # On RPi 4, Bluetooth occupies the PL011 UART by default, pushing serial0 onto the 
 # mini-UART (ttyS0) whose baud rate is tied to the VPU clock and is unreliable. 
 # disable-bt frees PL011 for GPIO14/15 (serial0 -> /dev/ttyAMA0).
 dtoverlay=disable-bt
+
+# Enable UART communication for WISPR
+enable_uart=1
+
+# Expose WISPR's secondary SD card via SDIO (GPIO22=CLK, GPIO23=CMD, GPIO24-27=DAT0-3).
+# poll_once=off enables continuous 1-second polling so the card is detected even if
+# WISPR's sd_card_enable() fires late (after GPS PPS sync, up to 90s post-boot).
+# sdio_overclock=10 slows the SDIO clock to 10 MHz for signal integrity.
+dtoverlay=sdio,poll_once=off
+dtparam=sdio_overclock=10
+

@@ -12,14 +12,10 @@ burst_seconds = 60
 pressureFreq = 4
 pressure_samples = pressureFreq * burst_seconds
 
-sd_mount = os.path.join("/", "media", "wispr_sd")
-log_path = os.path.join(sd_mount, "pressure_sensor", "logs")
-data_path = os.path.join(sd_mount, "pressure_sensor", "data")
+data_path = "/media/wispr_sd/pressure_sensor/data"
+log_path = "/media/wispr_sd/pressure_sensor/logs"
 
-if not os.path.exists(log_path):
-    os.makedirs(log_path)
-if not os.path.exists(data_path):
-    os.makedirs(data_path)
+os.makedirs(log_path, exist_ok=True)
 
 # Set up logging file
 now = datetime.now(timezone.utc)
@@ -35,6 +31,7 @@ logging.basicConfig(
 )
 logging.info("-------------------------------")
 logging.info("Starting tdh_pressure.py")
+
 
 # Initialize pressure sensor
 sensor = ms5837.MS5837_30BA()  # Default I2C bus is 1
@@ -59,45 +56,37 @@ except Exception as e:
     logging.error(e)
     exit(1)
 
-# Log pressure and temperature readings
 logging.info("Pressure sensor initialized successfully")
-isample = 0
+
 while True:
-    # Create a new data file for this sample burst of pressure data collection
+    # Collect one burst into memory.
     now = datetime.now(timezone.utc)
-    fname = os.path.join(
-        data_path,
-        "pressure_sensor." + datetime.strftime(now, "%Y%m%d.%H%M%S") + ".csv",
-    )
-    logging.info("Open file for writing: %s" % fname)
+    fname = "pressure_sensor." + datetime.strftime(now, "%Y%m%d.%H%M%S") + ".csv"
+    logging.info("Collecting burst: %s" % fname)
 
+    rows = ["timestamp,pressure_dbar,temperature_C\n"]
     isample = 0
-    t_end = now + timedelta(seconds=burst_seconds)
+    while isample <= pressure_samples:
+        timestamp = datetime.now(timezone.utc)
+        try:
+            sensor.read()
+            P = sensor.pressure(ms5837.UNITS_bar) * 10
+            T = sensor.temperature(ms5837.UNITS_Centigrade)
+        except Exception as e:
+            P = -9999
+            T = -9999
+            logging.error("Error reading pressure sensor")
+            logging.error(e)
 
-    with open(fname, "w", newline="\n") as f_out:
-        f_out.write("timestamp,pressure_dbar,temperature_C\n")
+        timestr = "{:%Y-%m-%d %H:%M:%S.%f}".format(timestamp)
+        rows.append("%s,%f,%f\n" % (timestr, P, T))
+        isample += 1
+        time.sleep(1 / pressureFreq - sensor_read_time)
 
-        while (datetime.now(timezone.utc) <= t_end) or (isample <= pressure_samples):
-            timestamp = datetime.now(timezone.utc)
-            try:
-                sensor.read()
-                P = sensor.pressure(ms5837.UNITS_bar) * 10
-                T = sensor.temperature(ms5837.UNITS_Centigrade)
-            except Exception as e:
-                P = -9999
-                T = -9999
-                logging.error("Error reading pressure sensor")
-                logging.error(e)
-
-            timestr = "{:%Y-%m-%d %H:%M:%S.%f}".format(timestamp)
-            f_out.write("%s,%f,%f\n" % (timestr, P, T))
-            f_out.flush()
-
-            isample = isample + 1
-
-            # Hard-code sleep to control recording rate, depends on RPi load and sensor read time.
-            # With testing, if pressureFreq = 4 Hz, then the actual rate is about 3.40 Hz,
-            # which means the sensor read time is about 0.044 seconds
-            time.sleep(1 / pressureFreq - sensor_read_time)
-
-    logging.info("Write complete")
+    logging.info("Burst complete — writing to SD card")
+    try:
+        with open(os.path.join(data_path, fname), "w", newline="\n") as f_out:
+            f_out.writelines(rows)
+        logging.info("Write complete: %s" % fname)
+    except Exception as e:
+        logging.error("Error writing burst file: %s" % e)
