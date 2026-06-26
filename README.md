@@ -89,6 +89,16 @@ sudo apt-get install exfatprogs
 Edit `/boot/firmware/config.txt` (`sudo nano /boot/firmware/config.txt`) and add the following lines. See [config_files/boot_config.txt](config_files/boot_config.txt) for a reference backup:
 
 ```ini
+# I2C slowed to 10 kHz (default 100 kHz) for two reasons:
+#   1. Reduces harmonic energy radiated by SCL onto nearby wires (WISPR noise).
+#   2. Provides settling margin for the ~3 m cable run to the MS5837 sensor.
+#      Cable capacitance (~300 pF) + pull-up resistance forms an RC filter;
+#      10 kHz gives ~50 µs per half-cycle, well above the ~1 µs RC time constant.
+# Note: 4 kHz caused intermittent failures, likely due to the BCM2711 I2C
+# hardware timeout (64 clock cycles = 16 ms at 4 kHz) firing during init.
+dtparam=i2c_arm=on
+dtparam=i2c_arm_baudrate=10000
+
 # Disable audio — BCM2835 audio clocks GPIO12 (PWM0) which is wired to WISPR
 # and injects switching noise into acoustic recordings.
 dtparam=audio=off

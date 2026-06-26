@@ -4,6 +4,15 @@
 
 # Uncomment some or all of these to enable the optional hardware interfaces
 dtparam=i2c_arm=on
+# I2C slowed to 10 kHz (default 100 kHz) for two reasons:
+#   1. Reduces harmonic energy radiated by SCL onto nearby wires (WISPR noise).
+#   2. Provides settling margin for the ~3 m cable run to the MS5837 sensor.
+#      Cable capacitance (~300 pF) + pull-up resistance forms an RC filter;
+#      10 kHz gives ~50 µs per half-cycle, well above the ~1 µs RC time constant.
+# Note: 4 kHz caused intermittent failures, likely due to the BCM2711 I2C
+# hardware timeout (64 clock cycles = 16 ms at 4 kHz) firing during init.
+# The MS5837 has no minimum clock speed requirement.
+dtparam=i2c_arm_baudrate=10000
 #dtparam=i2s=on
 #dtparam=spi=on
 
