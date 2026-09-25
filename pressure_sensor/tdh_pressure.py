@@ -42,6 +42,7 @@ try:
         try:
             initiated = sensor.init()
         except OSError:
+            initiated = 0
             pass
         if initiated:
             break
